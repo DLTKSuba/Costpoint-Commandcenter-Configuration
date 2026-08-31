@@ -2144,9 +2144,9 @@ function HomeShell() {
   const [interactionRulesOpen, setInteractionRulesOpen] = useState(false)
   const [navPanelOpen, setNavPanelOpen] = useState(false)
   /** Command Center rail item swaps the workspace for an empty canvas. */
-  const [blankCommandCenter, setBlankCommandCenter] = useState(false)
+  const [blankCommandCenter, setBlankCommandCenter] = useState(true)
   /** Configure Settings adds a second shell below the empty canvas. */
-  const [settingsShellOpen, setSettingsShellOpen] = useState(false)
+  const [settingsShellOpen, setSettingsShellOpen] = useState(true)
   const [settingsActiveTabId, setSettingsActiveTabId] = useState(SETTINGS_SHELL_TABS[0].id)
   const [settingsDesign, setSettingsDesign] = useState('design-1')
   const [delaAiEnabled, setDelaAiEnabled] = useState(false)
@@ -2923,7 +2923,7 @@ function HomeShell() {
             elevated
             className="command-center-home command-center-settings-shell"
             withHeader
-            headerTitle="Role Based Settings"
+            headerTitle="Role Based Setup"
             headerActions={<PanelWindowControls />}
           >
             <div className="card__body">
@@ -2932,7 +2932,7 @@ function HomeShell() {
                   <div
                     className="command-center-shell-inner"
                     role="region"
-                    aria-label="Role Based Settings content"
+                    aria-label="Role Based Setup content"
                   >
                     <TabStrip
                       tabs={settingsTabs}
@@ -2949,7 +2949,7 @@ function HomeShell() {
                 <div
                   className="command-center-settings-flat"
                   role="region"
-                  aria-label="Role Based Settings content"
+                  aria-label="Role Based Setup content"
                 >
                   <Stepper
                     nonLinear

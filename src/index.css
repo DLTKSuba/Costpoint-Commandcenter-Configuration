@@ -308,7 +308,7 @@
   padding-inline: 0;
 }
 
-/* Wizard Back / Next sit below the Role Based Settings card, not inside it. */
+/* Wizard Back / Next sit below the Role Based Setup card, not inside it. */
 .command-center-settings-actions {
   display: flex;
   justify-content: flex-end;

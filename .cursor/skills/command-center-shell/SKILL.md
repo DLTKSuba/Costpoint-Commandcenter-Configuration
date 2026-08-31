@@ -16,16 +16,16 @@ Compose with existing Harmony pieces (`ShellLayout`, `Card`, `TabStrip`, `LeftSi
 
 | Mode | When | Main card |
 |------|------|-----------|
-| Dashboard | Initial load (`blankCommandCenter === false`) | No panel header. Tab strip + Refresh. Expiration dashboard / detail tabs. |
-| Command Center | User activates the **Command Center** rail item | Empty card: no panel header, no well, no checkbox. No View dropdown. No tab strip. Flyout is open. |
-| Configure Settings | User selects **Configure Settings** in the flyout | First card gains the **Configure Settings** header + window controls and the inset well with **Enable Dela AI assistance**. Second card below it: header **Role Based Settings** + window controls. |
+| Dashboard | User leaves Command Center (`blankCommandCenter === false`) | No panel header. Tab strip + Refresh. Expiration dashboard / detail tabs. |
+| Command Center | User activates the **Command Center** rail item from the dashboard | Empty card: no panel header, no well, no checkbox. No View dropdown. No tab strip. Flyout is open. |
+| Configure Settings | Initial load, and after **Configure Settings** in the flyout | First card: **Configure Settings** header + window controls and the inset well with **Enable Dela AI assistance**. Second card below it: header **Role Based Setup** + window controls. |
 
 Leaving Command Center (click the rail item again) restores the dashboard and closes the settings shell.
 
 ## Chrome (presentation)
 
 - Theme: `theme-cp`. `ShellLayout` class `command-center-shell`. Page title **Command Center**. `pageHeaderShowDefaultButtons={false}`.
-- Design `Dropdown` (`.command-center-design-picker`) is `pageHeaderActions`, so it sits at the **far right of the page header** — never beside the title and never in the Role Based Settings header. Leave `.shell-page-header`'s own `justify-content: space-between` alone: that is what puts the trigger's right edge on the same line as the shell cards' right edge. The only override is `overflow: visible` so the open menu is not clipped, plus `left: auto; right: 0` on the menu so it opens inward.
+- Design `Dropdown` (`.command-center-design-picker`) is `pageHeaderActions`, so it sits at the **far right of the page header** — never beside the title and never in the Role Based Setup header. Leave `.shell-page-header`'s own `justify-content: space-between` alone: that is what puts the trigger's right edge on the same line as the shell cards' right edge. The only override is `overflow: visible` so the open menu is not clipped, plus `left: auto; right: 0` on the menu so it opens inward.
 - Picker contents: **Design Proposal** (`design-1`, the default and the shipping layout), then a non-selectable **Other Explorations** group header (a `disabled` option styled small-caps via `.command-center-design-picker .dropdown__item--disabled`), then **Design 2** rendered struck through with `<s>` through `optionSlots`. Superseded explorations always live under that header.
 - Primary elevated `Card` class `command-center-home`. White panel headers (`background-color: #ffffff`), not table-header grey. Title left, `PanelWindowControls` right (`minus`, `window-plain`, `x-mark` via `card__icon-btn`). Controls are presentational.
 - Inset well: `.command-center-shell-body` > `.command-center-shell-inner`. **No fixed height** — the well wraps its content, and the shell wraps the well (`flex: 0 0 auto` on body). Never leave empty space below the last field. Border `1px solid var(--border-color)`, `var(--radius-lg)`, white fill.
@@ -33,7 +33,7 @@ Leaving Command Center (click the rail item again) restores the dashboard and cl
 - Well sits tight under the title bar: `.command-center-home .card__body:has(> .command-center-shell-body) { padding: var(--space-2); }` — do not use the default `var(--space-4)` top gap on these shells.
 - Top Configure Settings well contains a functional, unchecked-by-default **Enable Dela AI assistance** Harmony `Checkbox`. Header, well, and checkbox render only while `settingsShellOpen` — entering Command Center alone leaves the first card empty.
 - Settings shell: extra class `command-center-settings-shell`. It sits in `.command-center-settings-stack` (`margin-top: var(--space-5)`). Header right is window controls only.
-- Design 2 footer (`.command-center-settings-actions`): Harmony `Back` (`outline`) and `Next` (`primary`) sit **below the Role Based Settings card**, not inside it. Right-aligned, `gap: var(--space-3)`, `padding-top: var(--space-4)`. Back is `disabled` on the first role (Accountant) and enabled from the second. Next advances to the next role and is `disabled` on the last role (T&E manager). Step circles stay clickable (non-linear).
+- Design 2 footer (`.command-center-settings-actions`): Harmony `Back` (`outline`) and `Next` (`primary`) sit **below the Role Based Setup card**, not inside it. Right-aligned, `gap: var(--space-3)`, `padding-top: var(--space-4)`. Back is `disabled` on the first role (Accountant) and enabled from the second. Next advances to the next role and is `disabled` on the last role (T&E manager). Step circles stay clickable (non-linear).
 - Design 1 (**Design Proposal**) is what opens by default, in the flyout handler and after leaving Command Center. It uses tabs inside the well: **Accountant**, **AI Orchestrator**, **Buyer**, **Contract Manager**, **Project Analyst**, **T&E manager**. Active tab: Harmony underline, `var(--theme-primary)`. Default tab is Accountant when the shell opens.
 - Design 2 replaces the tabs with a horizontal, icon-based, non-linear `Stepper` using the same six roles. Every step is directly clickable; Accountant is initially selected.
 - Design 2 has **no inset well**: the wizard and role-specific settings render directly on the settings shell inside `.command-center-settings-flat`, and the card body's own padding supplies the inset. Only Design 1 keeps `.command-center-shell-inner`. Both designs render the same interactive `.command-center-settings-panel`.
@@ -74,13 +74,13 @@ Collapsed rail shows icons only. Hover expands and reveals labels (Harmony `.lef
 
 Toggle:
 
-1. `blankCommandCenter` and `navPanelOpen` become `true` together (enter Command Center + open flyout). The Configure Settings screen stays hidden until the flyout item is picked.
+1. From the dashboard, `blankCommandCenter` and `navPanelOpen` become `true` together (enter Command Center + open flyout). The Configure Settings screen stays hidden until the flyout item is picked. Page load already shows Configure Settings, so this path is only after leaving Command Center.
 2. Second click sets both `false`, `settingsShellOpen` `false`, settings tab back to Accountant.
 3. While Command Center is on, that rail item is `active` (solid blue clicked state). Dashboard mode keeps **Accounting** as the default active module.
 
 ### Flyout (`LeftNavPanel`)
 
-- Starts **closed** on page load. Render only when `navPanelOpen`.
+- Starts **closed** on page load (`blankCommandCenter` and `settingsShellOpen` start `true`, flyout stays closed). Render only when `navPanelOpen`.
 - Title **Command Center**. Default item **Configure Settings**.
 - Mount sets `data-rail-locked="true"` on `.shell-layout__left-sidebar`. **Never** use `data-panel-open` here — that rule strips section card background/border/shadow.
 - While locked: hover width stays collapsed (`52px`; compact token under 1024px); labels stay hidden so they do not overflow under the flyout.
