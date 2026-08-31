@@ -197,6 +197,13 @@
   min-height: 0;
 }
 
+/* Command Center before Configure Settings is picked: the shell stays an empty
+ * workspace, so the body keeps a canvas height instead of collapsing to a sliver. */
+.command-center-blank-canvas {
+  flex: 0 0 auto;
+  min-height: 30vh;
+}
+
 /* The well sits tight under the title bar (Costpoint Timesheet pattern), so the
  * body's default var(--space-4) top padding is trimmed on shells holding one. */
 .command-center-home .card__body:has(> .command-center-shell-body) {
@@ -217,10 +224,17 @@
   padding: var(--space-3);
 }
 
-/* Second shell opened from Configure Settings: same chrome as the home shell,
- * sitting below it. */
-.command-center-settings-shell {
+/* Second shell opened from Configure Settings, plus its Back/Next bar. */
+.command-center-settings-stack {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-width: 0;
   margin-top: var(--space-5);
+}
+
+.command-center-settings-shell {
+  margin-top: 0;
 }
 
 /* Costpoint application tabs sit inside the well: full-width baseline, blue
@@ -246,19 +260,38 @@
   background-color: var(--theme-primary);
 }
 
-/* Design picker sits immediately after the Command Center page title. */
+/* Design picker sits at the far right of the page header, its right edge on the
+ * same line as the shell cards below (the header shares their content width).
+ * Visible overflow so the open menu is not clipped by the header. */
 .command-center-shell .shell-page-header {
-  justify-content: flex-start;
   overflow: visible;
-}
-
-.command-center-shell .shell-page-header__left {
-  flex: 0 0 auto;
 }
 
 .command-center-shell .command-center-design-picker .dropdown__trigger {
   width: var(--dropdown-min-width);
   min-width: var(--dropdown-min-width);
+}
+
+/* Right-anchored menu so it opens inward instead of past the shell edge. */
+.command-center-shell .command-center-design-picker .dropdown__menu {
+  left: auto;
+  right: 0;
+}
+
+/* Superseded explorations: non-selectable group header, struck-through items. */
+.command-center-design-picker .dropdown__item--disabled,
+.command-center-design-picker .dropdown__item:disabled {
+  padding-bottom: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  cursor: default;
+}
+
+.command-center-design-picker .dropdown__item--disabled:hover,
+.command-center-design-picker .dropdown__item:disabled:hover {
+  background-color: transparent;
 }
 
 /* Design 2 drops the inset well: wizard and field sit on the shell itself, so
@@ -273,6 +306,15 @@
 .command-center-settings-flat .command-center-settings-wizard,
 .command-center-settings-flat .command-center-settings-panel {
   padding-inline: 0;
+}
+
+/* Wizard Back / Next sit below the Role Based Settings card, not inside it. */
+.command-center-settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
 }
 
 /* Design 2: icon-led, non-linear role wizard replaces the Design 1 tabs. */
@@ -307,27 +349,77 @@
   background-color: var(--border-color);
 }
 
-/* Body of the selected application tab. Label left, control right. */
+/* Role-specific settings content shared by tabs and wizard steps. */
 .command-center-settings-panel {
   padding: var(--space-4) var(--space-3);
 }
 
-/* Harmony Dropdown trigger is width: 100% by default; keep this field at the
- * token min-width instead of stretching across the well. */
-.command-center-settings-shell .command-center-settings-panel .dropdown-wrapper--inline {
-  width: auto;
-  /* 20px = --space-5 between the Organization Level label and the value.
-   * Extra class in the chain so this wins Harmony .dropdown-wrapper--inline. */
-  gap: var(--space-5);
+/* Design 1: fields start at the first character of the tab labels, so the well's
+ * tabstrip inline padding and the tab's own padding are both matched here. */
+.command-center-settings-shell .command-center-shell-inner .command-center-settings-panel {
+  padding-inline: calc(var(--space-3) + var(--space-4));
 }
 
-.command-center-settings-panel .dropdown {
+/* One grid for the whole role form: labels share the first column and every
+ * control starts the second, so values line up no matter how long a label is.
+ * The 20px column gap is the label/value distance. */
+.command-center-role-settings-form {
+  display: grid;
+  /* Label column, value column, then filler so full-width rows (groups) still
+   * stretch across the panel while labels and values stay pinned to columns. */
+  grid-template-columns: max-content max-content 1fr;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+}
+
+.command-center-role-settings-form > .label {
+  grid-column: 1;
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.command-center-role-settings-form > .command-center-role-setting-control {
+  grid-column: 2;
+}
+
+/* Groups and standalone checkboxes are full-width rows, not label/value pairs. */
+.command-center-role-settings-form > .command-center-role-setting-group,
+.command-center-role-settings-form > .command-center-role-setting-block {
+  grid-column: 1 / -1;
+}
+
+.command-center-role-setting-control .dropdown {
   width: auto;
 }
 
-.command-center-settings-panel .dropdown__trigger {
+.command-center-role-setting-control .dropdown__trigger {
   width: var(--dropdown-min-width);
   min-width: var(--dropdown-min-width);
+}
+
+.command-center-role-setting-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  margin: 0;
+  padding: var(--space-4);
+  gap: var(--space-3) var(--space-6);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.command-center-role-setting-group legend {
+  padding-inline: var(--space-2);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+
+@media (max-width: var(--breakpoint-md)) {
+  .command-center-role-settings-form,
+  .command-center-role-setting-group {
+    grid-template-columns: 1fr;
+  }
 }
 
 /*

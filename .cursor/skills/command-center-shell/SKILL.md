@@ -17,29 +17,48 @@ Compose with existing Harmony pieces (`ShellLayout`, `Card`, `TabStrip`, `LeftSi
 | Mode | When | Main card |
 |------|------|-----------|
 | Dashboard | Initial load (`blankCommandCenter === false`) | No panel header. Tab strip + Refresh. Expiration dashboard / detail tabs. |
-| Command Center | User activates the **Command Center** rail item | Panel header **Configure Settings** + window controls. Inset well with **Enable Dela AI assistance** checkbox. No View dropdown. No tab strip. |
-| Configure Settings | User selects **Configure Settings** in the flyout | Second card below the first. Header **Role Based Settings** + window controls. Same inset well, with Costpoint application tabs inside. |
+| Command Center | User activates the **Command Center** rail item | Empty card: no panel header, no well, no checkbox. No View dropdown. No tab strip. Flyout is open. |
+| Configure Settings | User selects **Configure Settings** in the flyout | First card gains the **Configure Settings** header + window controls and the inset well with **Enable Dela AI assistance**. Second card below it: header **Role Based Settings** + window controls. |
 
 Leaving Command Center (click the rail item again) restores the dashboard and closes the settings shell.
 
 ## Chrome (presentation)
 
-- Theme: `theme-cp`. `ShellLayout` class `command-center-shell`. Page title **Command Center**. `pageHeaderShowDefaultButtons={false}`. Design `Dropdown` is `pageHeaderActions`, immediately to the right of the title (not in the Role Based Settings header): **Design 1** and **Design 2** (**Design 2** default).
+- Theme: `theme-cp`. `ShellLayout` class `command-center-shell`. Page title **Command Center**. `pageHeaderShowDefaultButtons={false}`.
+- Design `Dropdown` (`.command-center-design-picker`) is `pageHeaderActions`, so it sits at the **far right of the page header** — never beside the title and never in the Role Based Settings header. Leave `.shell-page-header`'s own `justify-content: space-between` alone: that is what puts the trigger's right edge on the same line as the shell cards' right edge. The only override is `overflow: visible` so the open menu is not clipped, plus `left: auto; right: 0` on the menu so it opens inward.
+- Picker contents: **Design Proposal** (`design-1`, the default and the shipping layout), then a non-selectable **Other Explorations** group header (a `disabled` option styled small-caps via `.command-center-design-picker .dropdown__item--disabled`), then **Design 2** rendered struck through with `<s>` through `optionSlots`. Superseded explorations always live under that header.
 - Primary elevated `Card` class `command-center-home`. White panel headers (`background-color: #ffffff`), not table-header grey. Title left, `PanelWindowControls` right (`minus`, `window-plain`, `x-mark` via `card__icon-btn`). Controls are presentational.
 - Inset well: `.command-center-shell-body` > `.command-center-shell-inner`. **No fixed height** — the well wraps its content, and the shell wraps the well (`flex: 0 0 auto` on body). Never leave empty space below the last field. Border `1px solid var(--border-color)`, `var(--radius-lg)`, white fill.
 - The settings well keeps `overflow: visible` so an open `Dropdown` menu is not clipped.
 - Well sits tight under the title bar: `.command-center-home .card__body:has(> .command-center-shell-body) { padding: var(--space-2); }` — do not use the default `var(--space-4)` top gap on these shells.
-- Top Configure Settings well contains a functional, unchecked-by-default **Enable Dela AI assistance** Harmony `Checkbox`.
-- Settings shell: extra class `command-center-settings-shell`, `margin-top: var(--space-5)`. Header right is window controls only.
-- Design 1 uses tabs inside the well: **Project Analyst**, **Accounting**, **Billing**, **Proposals**. Active tab: Harmony underline, `var(--theme-primary)`.
-- Design 2 replaces the tabs with a horizontal, icon-based, non-linear `Stepper` using the same four roles. Every step is directly clickable; Project Analyst is initially selected.
-- Design 2 has **no inset well**: the wizard and the Organization Level field render directly on the settings shell inside `.command-center-settings-flat`, and the card body's own padding supplies the inset (`padding-inline: 0` on the wizard and field). Only Design 1 keeps `.command-center-shell-inner`. The Organization Level field is shared JSX rendered by whichever design is active.
+- Top Configure Settings well contains a functional, unchecked-by-default **Enable Dela AI assistance** Harmony `Checkbox`. Header, well, and checkbox render only while `settingsShellOpen` — entering Command Center alone leaves the first card empty.
+- Settings shell: extra class `command-center-settings-shell`. It sits in `.command-center-settings-stack` (`margin-top: var(--space-5)`). Header right is window controls only.
+- Design 2 footer (`.command-center-settings-actions`): Harmony `Back` (`outline`) and `Next` (`primary`) sit **below the Role Based Settings card**, not inside it. Right-aligned, `gap: var(--space-3)`, `padding-top: var(--space-4)`. Back is `disabled` on the first role (Accountant) and enabled from the second. Next advances to the next role and is `disabled` on the last role (T&E manager). Step circles stay clickable (non-linear).
+- Design 1 (**Design Proposal**) is what opens by default, in the flyout handler and after leaving Command Center. It uses tabs inside the well: **Accountant**, **AI Orchestrator**, **Buyer**, **Contract Manager**, **Project Analyst**, **T&E manager**. Active tab: Harmony underline, `var(--theme-primary)`. Default tab is Accountant when the shell opens.
+- Design 2 replaces the tabs with a horizontal, icon-based, non-linear `Stepper` using the same six roles. Every step is directly clickable; Accountant is initially selected.
+- Design 2 has **no inset well**: the wizard and role-specific settings render directly on the settings shell inside `.command-center-settings-flat`, and the card body's own padding supplies the inset. Only Design 1 keeps `.command-center-shell-inner`. Both designs render the same interactive `.command-center-settings-panel`.
 - Design 2 chrome (scoped under `.command-center-settings-wizard`; never edit shared `Step`/`Stepper` styles):
   - Current step: primary fill + `0 0 0 var(--space-1-5) var(--theme-primary-border)` halo; role icon stays.
   - Completed steps (any role before the current one): omit the icon so Harmony can render the checkmark; indicator is `var(--color-success)` with a `var(--color-success-border)` halo. Upcoming steps stay grey with their role icon.
   - Current and completed labels are `var(--text-primary)` semibold; upcoming labels are `var(--text-secondary)`.
   - Connectors always stay `var(--border-color)` (never painted as travelled).
-- Selected tab body (`.command-center-settings-panel`): **Organization Level** `Dropdown` with `labelVariant="inline"` (label left, control right). Gap between label and value is `var(--space-5)` (20px). Placeholder `-select-`, options Level 1–4. Trigger width is `var(--dropdown-min-width)` (do not stretch full-well). Value is kept per tab.
+- Selected role body (`.command-center-settings-panel`) has **no role heading or caption** — the fields start immediately. In Design 1 its inline padding is `calc(var(--space-3) + var(--space-4))` so the first field lines up with the first character of the tab labels. Settings persist while switching roles:
+  - **Accountant:** default organizational rollup, reporting period source, and financial metric groups.
+  - **AI Orchestrator:** default AI data scope and AI summary/recommendation/notification controls.
+  - **Buyer:** procurement lifecycle stages and overdue activity date source.
+  - **Contract Manager:** organizational rollup, warning/critical funding utilization thresholds, and threshold alerts.
+  - **Project Analyst:** organizational rollup, review period, and project insight groups.
+  - **T&E manager:** organizational rollup, overdue submission date source, and time/expense exception groups.
+- Role fields are one label/value pair per row in a single shared grid (`.command-center-role-settings-form`): `grid-template-columns: max-content max-content 1fr`, labels pinned to column 1, controls to column 2, `var(--space-5)` column gap (the 20px label/value distance) and `var(--space-3)` row gap. Never lay two fields side by side. The third column is filler so full-width rows (`.command-center-role-setting-group` fieldsets, `.command-center-role-setting-block`) can span `1 / -1` across the panel.
+- Rows come from `RoleSettingField`, which renders a Harmony `Label` and the control as **siblings**, both direct children of the grid. Do not wrap a field in a div and do not rely on `display: contents` to flatten Harmony's `--inline` label wrapper: Chromium does not honor it on grid items, and the pair collapses back into one cell.
+- Dropdown triggers are `var(--dropdown-min-width)`; checkbox groups use fieldsets with legends; threshold percentages use Harmony `NumberInput` with the warning row directly above the critical row.
+- Role content is interactive and shared between Design 1 tabs and Design 2 steps. Values persist while switching roles:
+  - **Accountant:** default organizational rollup level, reporting period source, and financial metric groups (Revenue and billing, Cost and margin, Budget and EAC, Cash and receivables).
+  - **AI Orchestrator:** default AI data scope and toggles for financial summaries, follow-up recommendations, and proactive notifications.
+  - **Buyer:** procurement lifecycle stages (Requisition, Solicitation, Purchase order, Receipt, Invoice) and overdue activity date basis.
+  - **Contract Manager:** default organizational rollup level, warning then critical funding utilization thresholds on their own rows (each clamped against the other), and threshold alert toggle.
+  - **Project Analyst:** default organizational rollup level, default review period, and project insight groups.
+  - **T&E manager:** default organizational rollup level, overdue submission date basis, and time/expense exception groups.
 - Left rail: two floating section cards (workspace 4 icons, modules including Command Center). Keep cards; never flatten them for this flyout.
 - Right rail: top-aligned to the refresh button (dashboard) or header actions (Command Center). `--cc-right-rail-top` measured in `HomeShell`. Hover: `--cc-nav-hover-bg: #A6C9EC` on inactive rail and flyout items. Active item keeps solid `--theme-primary`.
 
@@ -55,8 +74,8 @@ Collapsed rail shows icons only. Hover expands and reveals labels (Harmony `.lef
 
 Toggle:
 
-1. `blankCommandCenter` and `navPanelOpen` become `true` together (enter Command Center + open flyout).
-2. Second click sets both `false`, `settingsShellOpen` `false`, settings tab back to Project Analyst.
+1. `blankCommandCenter` and `navPanelOpen` become `true` together (enter Command Center + open flyout). The Configure Settings screen stays hidden until the flyout item is picked.
+2. Second click sets both `false`, `settingsShellOpen` `false`, settings tab back to Accountant.
 3. While Command Center is on, that rail item is `active` (solid blue clicked state). Dashboard mode keeps **Accounting** as the default active module.
 
 ### Flyout (`LeftNavPanel`)
@@ -69,7 +88,7 @@ Toggle:
 
 ### Configure Settings click
 
-`onItemSelect`: `navPanelOpen = false`, reset settings tab to Project Analyst, `settingsShellOpen = true`. Flyout disappears. Second shell appears below the first.
+`onItemSelect`: `navPanelOpen = false`, reset settings tab to Accountant, `settingsShellOpen = true`. Flyout disappears. Second shell appears below the first.
 
 ## Do not
 

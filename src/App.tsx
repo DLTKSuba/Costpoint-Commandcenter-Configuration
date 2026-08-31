@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type MouseEvent,
+  type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
 import clsx from 'clsx'
@@ -22,7 +23,9 @@ import { Checkbox } from './components/harmony/Checkbox'
 import { Dialog } from './components/harmony/Dialog'
 import { Dropdown } from './components/harmony/Dropdown'
 import { InteractionRulesPanel } from './components/harmony/InteractionRulesPanel'
+import { Label } from './components/harmony/Label'
 import { LeftNavPanel } from './components/harmony/LeftNavPanel'
+import { NumberInput } from './components/harmony/NumberInput'
 import { Stepper } from './components/harmony/Stepper'
 import { TabStrip, type TabStripTab } from './components/harmony/TabStrip'
 import { Table } from './components/harmony/Table'
@@ -90,15 +93,28 @@ const COMMAND_CENTER_NAV_LABEL = 'Command Center'
 
 /** Costpoint application tabs inside the Configure Settings well. */
 const SETTINGS_SHELL_TABS: ReadonlyArray<{ id: string; label: string }> = [
+  { id: 'accountant', label: 'Accountant' },
+  { id: 'ai-orchestrator', label: 'AI Orchestrator' },
+  { id: 'buyer', label: 'Buyer' },
+  { id: 'contract-manager', label: 'Contract Manager' },
   { id: 'project-analyst', label: 'Project Analyst' },
-  { id: 'accounting', label: 'Accounting' },
-  { id: 'billing', label: 'Billing' },
-  { id: 'proposals', label: 'Proposals' },
+  { id: 'te-manager', label: 'T&E manager' },
 ]
 
+/**
+ * Design Proposal is the shipping layout. Superseded explorations sit under a
+ * non-selectable group header and read as struck through.
+ */
 const SETTINGS_DESIGN_OPTIONS = [
-  { value: 'design-1', label: 'Design 1' },
+  { value: 'design-1', label: 'Design Proposal' },
+  { value: 'other-explorations', label: 'Other Explorations', disabled: true },
   { value: 'design-2', label: 'Design 2' },
+]
+
+const SETTINGS_DESIGN_OPTION_SLOTS = [
+  null,
+  <span className="command-center-design-picker__group-label">Other Explorations</span>,
+  <s>Design 2</s>,
 ]
 
 /**
@@ -106,10 +122,12 @@ const SETTINGS_DESIGN_OPTIONS = [
  * steps drop the icon so Harmony can render the checkmark.
  */
 const SETTINGS_WIZARD_STEPS = [
+  { label: 'Accountant', icon: 'calculator' },
+  { label: 'AI Orchestrator', icon: 'command-line' },
+  { label: 'Buyer', icon: 'cube' },
+  { label: 'Contract Manager', icon: 'clipboard-document-list' },
   { label: 'Project Analyst', icon: 'chart-bar' },
-  { label: 'Accounting', icon: 'calculator' },
-  { label: 'Billing', icon: 'receipt' },
-  { label: 'Proposals', icon: 'clipboard-document-list' },
+  { label: 'T&E manager', icon: 'clock' },
 ]
 
 /** Organization depth an admin can scope the selected application to. */
@@ -119,6 +137,66 @@ const ORG_LEVEL_OPTIONS = [
   { value: 'level-3', label: 'Level 3' },
   { value: 'level-4', label: 'Level 4' },
 ]
+
+const REPORTING_PERIOD_OPTIONS = [
+  { value: 'current-accounting-period', label: 'Current accounting period' },
+  { value: 'latest-closed-period', label: 'Latest closed period' },
+  { value: 'current-fiscal-period', label: 'Current fiscal period' },
+  { value: 'user-selected-period', label: 'Allow user selection' },
+]
+
+const OVERDUE_DATE_OPTIONS = [
+  { value: 'required-date', label: 'Required date' },
+  { value: 'promised-date', label: 'Vendor promised date' },
+  { value: 'po-delivery-date', label: 'Purchase order delivery date' },
+]
+
+const AI_SCOPE_OPTIONS = [
+  { value: 'role-data', label: 'Current role data only' },
+  { value: 'command-center', label: 'All Command Center data' },
+  { value: 'organization', label: 'Selected organization and children' },
+]
+
+const PROJECT_PERIOD_OPTIONS = [
+  { value: 'period-to-date', label: 'Period to date' },
+  { value: 'year-to-date', label: 'Year to date' },
+  { value: 'project-lifecycle', label: 'Project lifecycle' },
+]
+
+const TIME_EXCEPTION_OPTIONS = [
+  { value: 'period-end', label: 'Period end date' },
+  { value: 'timesheet-due', label: 'Timesheet due date' },
+  { value: 'supervisor-review', label: 'Supervisor review date' },
+]
+
+const DEFAULT_ROLE_SETTINGS: Record<string, string | number | boolean> = {
+  accountantPeriodSource: 'current-accounting-period',
+  accountantRevenueMetrics: true,
+  accountantCostMetrics: true,
+  accountantBudgetMetrics: true,
+  accountantCashMetrics: false,
+  aiSummaries: true,
+  aiRecommendations: true,
+  aiNotifications: false,
+  aiScope: 'role-data',
+  buyerRequisition: true,
+  buyerSolicitation: true,
+  buyerPurchaseOrder: true,
+  buyerReceipt: true,
+  buyerInvoice: false,
+  buyerOverdueDate: 'required-date',
+  contractWarningThreshold: 75,
+  contractCriticalThreshold: 90,
+  contractAlerts: true,
+  projectPeriod: 'period-to-date',
+  projectBudgetMetrics: true,
+  projectScheduleMetrics: true,
+  projectRiskMetrics: true,
+  teExceptionDate: 'timesheet-due',
+  teMissingTimesheets: true,
+  tePendingApprovals: true,
+  teExpenseExceptions: true,
+}
 
 /**
  * Minimize / maximize / close trio that Costpoint panel headers carry on the
@@ -136,6 +214,27 @@ function PanelWindowControls() {
       <button className="card__icon-btn" type="button" aria-label="Close">
         <Icon name="x-mark" size="sm" />
       </button>
+    </>
+  )
+}
+
+/**
+ * Role setting row: label and control are siblings so they land in the role
+ * form's own grid columns, which keeps every label and every value aligned.
+ */
+function RoleSettingField({
+  id,
+  label,
+  children,
+}: {
+  id: string
+  label: string
+  children: ReactNode
+}) {
+  return (
+    <>
+      <Label htmlFor={id}>{label}</Label>
+      <div className="command-center-role-setting-control">{children}</div>
     </>
   )
 }
@@ -2049,12 +2148,19 @@ function HomeShell() {
   /** Configure Settings adds a second shell below the empty canvas. */
   const [settingsShellOpen, setSettingsShellOpen] = useState(false)
   const [settingsActiveTabId, setSettingsActiveTabId] = useState(SETTINGS_SHELL_TABS[0].id)
-  const [settingsDesign, setSettingsDesign] = useState('design-2')
+  const [settingsDesign, setSettingsDesign] = useState('design-1')
   const [delaAiEnabled, setDelaAiEnabled] = useState(false)
   /** Org level is scoped per application tab, so each tab keeps its own choice. */
   const [orgLevelByTab, setOrgLevelByTab] = useState<Record<string, string>>({})
+  const [roleSettings, setRoleSettings] =
+    useState<Record<string, string | number | boolean>>(DEFAULT_ROLE_SETTINGS)
   const kpiFilterZoneRef = useRef<HTMLDivElement>(null)
   const themeProps = THEME_SHELL_PROPS[DEFAULT_THEME] ?? THEME_SHELL_PROPS['theme-cp']
+
+  useEffect(() => {
+    if (SETTINGS_SHELL_TABS.some((tab) => tab.id === settingsActiveTabId)) return
+    setSettingsActiveTabId(SETTINGS_SHELL_TABS[0].id)
+  }, [settingsActiveTabId])
 
   const handleSelectKpiTier = useCallback((tier: ExpirationTierKey) => {
     setExpirationTierFilter((prev) => (prev === tier ? null : tier))
@@ -2069,7 +2175,7 @@ function HomeShell() {
       if (!nextBlank) {
         setSettingsShellOpen(false)
         setSettingsActiveTabId(SETTINGS_SHELL_TABS[0].id)
-        setSettingsDesign('design-2')
+        setSettingsDesign('design-1')
       }
     },
     [blankCommandCenter],
@@ -2229,7 +2335,7 @@ function HomeShell() {
       window.removeEventListener('resize', syncRightRailTop)
       document.documentElement.style.removeProperty('--cc-right-rail-top')
     }
-  }, [activeTabId, blankCommandCenter])
+  }, [activeTabId, blankCommandCenter, settingsShellOpen])
 
   useEffect(() => {
     const logoLink = document.querySelector<HTMLAnchorElement>(
@@ -2349,13 +2455,30 @@ function HomeShell() {
     })
   }, [settingsActiveTabId])
 
-  /* Shared by both designs; each renders it in its own container. */
-  const settingsOrgLevelField = (
-    <div className="command-center-settings-panel">
+  const settingsWizardIndex = Math.max(
+    0,
+    SETTINGS_SHELL_TABS.findIndex((tab) => tab.id === settingsActiveTabId),
+  )
+  const isFirstWizardStep = settingsWizardIndex === 0
+  const isLastWizardStep = settingsWizardIndex >= SETTINGS_SHELL_TABS.length - 1
+
+  const goToWizardStep = useCallback((stepIndex: number) => {
+    const tab = SETTINGS_SHELL_TABS[stepIndex]
+    if (tab == null) return
+    setSettingsActiveTabId(tab.id)
+  }, [])
+
+  const updateRoleSetting = useCallback(
+    (key: string, value: string | number | boolean) =>
+      setRoleSettings((prev) => ({ ...prev, [key]: value })),
+    [],
+  )
+
+  const organizationLevelField = (
+    <RoleSettingField id="role-org-level" label="Default organizational rollup level">
       <Dropdown
-        key={settingsActiveTabId}
-        label="Organization Level"
-        labelVariant="inline"
+        key={`org-${settingsActiveTabId}`}
+        id="role-org-level"
         placeholder="-select-"
         options={ORG_LEVEL_OPTIONS}
         value={orgLevelByTab[settingsActiveTabId] ?? ''}
@@ -2363,7 +2486,215 @@ function HomeShell() {
           setOrgLevelByTab((prev) => ({ ...prev, [settingsActiveTabId]: value }))
         }
       />
-    </div>
+    </RoleSettingField>
+  )
+
+  const settingsRoleContent = (() => {
+    switch (settingsActiveTabId) {
+      case 'accountant':
+        return (
+          <>
+            {organizationLevelField}
+            <RoleSettingField id="accountant-period-source" label="Reporting period source">
+              <Dropdown
+                id="accountant-period-source"
+                options={REPORTING_PERIOD_OPTIONS}
+                value={String(roleSettings.accountantPeriodSource)}
+                onChange={(value) => updateRoleSetting('accountantPeriodSource', value)}
+              />
+            </RoleSettingField>
+            <fieldset className="command-center-role-setting-group">
+              <legend>Financial metric groups</legend>
+              <Checkbox
+                label="Revenue and billing"
+                checked={Boolean(roleSettings.accountantRevenueMetrics)}
+                onChange={(event) =>
+                  updateRoleSetting('accountantRevenueMetrics', event.target.checked)
+                }
+              />
+              <Checkbox
+                label="Cost and margin"
+                checked={Boolean(roleSettings.accountantCostMetrics)}
+                onChange={(event) =>
+                  updateRoleSetting('accountantCostMetrics', event.target.checked)
+                }
+              />
+              <Checkbox
+                label="Budget and EAC"
+                checked={Boolean(roleSettings.accountantBudgetMetrics)}
+                onChange={(event) =>
+                  updateRoleSetting('accountantBudgetMetrics', event.target.checked)
+                }
+              />
+              <Checkbox
+                label="Cash and receivables"
+                checked={Boolean(roleSettings.accountantCashMetrics)}
+                onChange={(event) =>
+                  updateRoleSetting('accountantCashMetrics', event.target.checked)
+                }
+              />
+            </fieldset>
+          </>
+        )
+      case 'ai-orchestrator':
+        return (
+          <>
+            <RoleSettingField id="ai-scope" label="Default AI data scope">
+              <Dropdown
+                id="ai-scope"
+                options={AI_SCOPE_OPTIONS}
+                value={String(roleSettings.aiScope)}
+                onChange={(value) => updateRoleSetting('aiScope', value)}
+              />
+            </RoleSettingField>
+            <fieldset className="command-center-role-setting-group">
+              <legend>AI assistance</legend>
+              <Checkbox
+                label="Generate financial summaries"
+                checked={Boolean(roleSettings.aiSummaries)}
+                onChange={(event) => updateRoleSetting('aiSummaries', event.target.checked)}
+              />
+              <Checkbox
+                label="Recommend follow-up actions"
+                checked={Boolean(roleSettings.aiRecommendations)}
+                onChange={(event) => updateRoleSetting('aiRecommendations', event.target.checked)}
+              />
+              <Checkbox
+                label="Send proactive insight notifications"
+                checked={Boolean(roleSettings.aiNotifications)}
+                onChange={(event) => updateRoleSetting('aiNotifications', event.target.checked)}
+              />
+            </fieldset>
+          </>
+        )
+      case 'buyer':
+        return (
+          <>
+            <fieldset className="command-center-role-setting-group">
+              <legend>Procurement lifecycle stages</legend>
+              {[
+                ['buyerRequisition', 'Requisition'],
+                ['buyerSolicitation', 'Solicitation'],
+                ['buyerPurchaseOrder', 'Purchase order'],
+                ['buyerReceipt', 'Receipt'],
+                ['buyerInvoice', 'Invoice'],
+              ].map(([key, label]) => (
+                <Checkbox
+                  key={key}
+                  label={label}
+                  checked={Boolean(roleSettings[key])}
+                  onChange={(event) => updateRoleSetting(key, event.target.checked)}
+                />
+              ))}
+            </fieldset>
+            <RoleSettingField id="buyer-overdue-date" label="Overdue activity date">
+              <Dropdown
+                id="buyer-overdue-date"
+                options={OVERDUE_DATE_OPTIONS}
+                value={String(roleSettings.buyerOverdueDate)}
+                onChange={(value) => updateRoleSetting('buyerOverdueDate', value)}
+              />
+            </RoleSettingField>
+          </>
+        )
+      case 'contract-manager':
+        return (
+          <>
+            {organizationLevelField}
+            <RoleSettingField id="contract-warning" label="Funding warning threshold (%)">
+              <NumberInput
+                id="contract-warning"
+                min={1}
+                max={Number(roleSettings.contractCriticalThreshold) - 1}
+                value={Number(roleSettings.contractWarningThreshold)}
+                onChange={(value) => updateRoleSetting('contractWarningThreshold', value)}
+              />
+            </RoleSettingField>
+            <RoleSettingField id="contract-critical" label="Funding critical threshold (%)">
+              <NumberInput
+                id="contract-critical"
+                min={Number(roleSettings.contractWarningThreshold) + 1}
+                max={100}
+                value={Number(roleSettings.contractCriticalThreshold)}
+                onChange={(value) => updateRoleSetting('contractCriticalThreshold', value)}
+              />
+            </RoleSettingField>
+            <div className="command-center-role-setting-block">
+              <Checkbox
+                label="Flag contracts when a funding threshold is reached"
+                checked={Boolean(roleSettings.contractAlerts)}
+                onChange={(event) => updateRoleSetting('contractAlerts', event.target.checked)}
+              />
+            </div>
+          </>
+        )
+      case 'project-analyst':
+        return (
+          <>
+            {organizationLevelField}
+            <RoleSettingField id="project-period" label="Default review period">
+              <Dropdown
+                id="project-period"
+                options={PROJECT_PERIOD_OPTIONS}
+                value={String(roleSettings.projectPeriod)}
+                onChange={(value) => updateRoleSetting('projectPeriod', value)}
+              />
+            </RoleSettingField>
+            <fieldset className="command-center-role-setting-group">
+              <legend>Project insight groups</legend>
+              {[
+                ['projectBudgetMetrics', 'Budget and EAC'],
+                ['projectScheduleMetrics', 'Schedule performance'],
+                ['projectRiskMetrics', 'Risk and exceptions'],
+              ].map(([key, label]) => (
+                <Checkbox
+                  key={key}
+                  label={label}
+                  checked={Boolean(roleSettings[key])}
+                  onChange={(event) => updateRoleSetting(key, event.target.checked)}
+                />
+              ))}
+            </fieldset>
+          </>
+        )
+      case 'te-manager':
+        return (
+          <>
+            {organizationLevelField}
+            <RoleSettingField id="te-exception-date" label="Overdue submission date">
+              <Dropdown
+                id="te-exception-date"
+                options={TIME_EXCEPTION_OPTIONS}
+                value={String(roleSettings.teExceptionDate)}
+                onChange={(value) => updateRoleSetting('teExceptionDate', value)}
+              />
+            </RoleSettingField>
+            <fieldset className="command-center-role-setting-group">
+              <legend>Time and expense exception groups</legend>
+              {[
+                ['teMissingTimesheets', 'Missing timesheets'],
+                ['tePendingApprovals', 'Pending approvals'],
+                ['teExpenseExceptions', 'Expense exceptions'],
+              ].map(([key, label]) => (
+                <Checkbox
+                  key={key}
+                  label={label}
+                  checked={Boolean(roleSettings[key])}
+                  onChange={(event) => updateRoleSetting(key, event.target.checked)}
+                />
+              ))}
+            </fieldset>
+          </>
+        )
+      default:
+        return null
+    }
+  })()
+
+  const settingsRolePanel = (
+    <section className="command-center-settings-panel" aria-live="polite">
+      <div className="command-center-role-settings-form">{settingsRoleContent}</div>
+    </section>
   )
 
 
@@ -2395,6 +2726,7 @@ function HomeShell() {
             id="settings-design-picker"
             className="command-center-design-picker"
             options={SETTINGS_DESIGN_OPTIONS}
+            optionSlots={SETTINGS_DESIGN_OPTION_SLOTS}
             value={settingsDesign}
             onChange={setSettingsDesign}
           />
@@ -2404,9 +2736,9 @@ function HomeShell() {
         primary
         elevated
         className="command-center-home"
-        withHeader={blankCommandCenter}
-        headerTitle={blankCommandCenter ? 'Configure Settings' : undefined}
-        headerActions={blankCommandCenter ? <PanelWindowControls /> : undefined}
+        withHeader={settingsShellOpen}
+        headerTitle={settingsShellOpen ? 'Configure Settings' : undefined}
+        headerActions={settingsShellOpen ? <PanelWindowControls /> : undefined}
       >
         <div className="card__body">
           {!blankCommandCenter && (
@@ -2441,7 +2773,15 @@ function HomeShell() {
           </div>
           )}
 
-          {blankCommandCenter && (
+          {blankCommandCenter && !settingsShellOpen && (
+            <div
+              className="command-center-blank-canvas"
+              role="region"
+              aria-label="Command Center content"
+            />
+          )}
+
+          {settingsShellOpen && (
             <div className="command-center-shell-body">
               <div
                 className="command-center-shell-inner command-center-ai-settings"
@@ -2577,55 +2917,79 @@ function HomeShell() {
       </Card>
 
       {settingsShellOpen && (
-        <Card
-          primary
-          elevated
-          className="command-center-home command-center-settings-shell"
-          withHeader
-          headerTitle="Role Based Settings"
-          headerActions={<PanelWindowControls />}
-        >
-          <div className="card__body">
-            {settingsDesign === 'design-1' ? (
-              <div className="command-center-shell-body">
+        <div className="command-center-settings-stack">
+          <Card
+            primary
+            elevated
+            className="command-center-home command-center-settings-shell"
+            withHeader
+            headerTitle="Role Based Settings"
+            headerActions={<PanelWindowControls />}
+          >
+            <div className="card__body">
+              {settingsDesign === 'design-1' ? (
+                <div className="command-center-shell-body">
+                  <div
+                    className="command-center-shell-inner"
+                    role="region"
+                    aria-label="Role Based Settings content"
+                  >
+                    <TabStrip
+                      tabs={settingsTabs}
+                      onTabSelected={setSettingsActiveTabId}
+                      overflowMode="none"
+                      className="tabstrip--command-center-tabs command-center-settings-tabs"
+                    />
+                    {settingsRolePanel}
+                  </div>
+                </div>
+              ) : (
+                /* Design 2 has no inset well: the wizard and its field sit directly
+                 * on the settings shell. */
                 <div
-                  className="command-center-shell-inner"
+                  className="command-center-settings-flat"
                   role="region"
                   aria-label="Role Based Settings content"
                 >
-                  <TabStrip
-                    tabs={settingsTabs}
-                    onTabSelected={setSettingsActiveTabId}
-                    overflowMode="none"
-                    className="tabstrip--command-center-tabs command-center-settings-tabs"
+                  <Stepper
+                    nonLinear
+                    activeStep={settingsWizardIndex}
+                    steps={settingsWizardSteps}
+                    onStepClick={goToWizardStep}
+                    className="command-center-settings-wizard"
                   />
-                  {settingsOrgLevelField}
+                  {settingsRolePanel}
                 </div>
-              </div>
-            ) : (
-              /* Design 2 has no inset well: the wizard and its field sit directly
-               * on the settings shell. */
-              <div
-                className="command-center-settings-flat"
-                role="region"
-                aria-label="Role Based Settings content"
+              )}
+            </div>
+          </Card>
+          {settingsDesign === 'design-2' && (
+            <div
+              className="command-center-settings-actions"
+              role="group"
+              aria-label="Wizard navigation"
+            >
+              <Button
+                type="button"
+                buttonType="theme"
+                variant="outline"
+                disabled={isFirstWizardStep}
+                onClick={() => goToWizardStep(settingsWizardIndex - 1)}
               >
-                <Stepper
-                  nonLinear
-                  activeStep={SETTINGS_SHELL_TABS.findIndex(
-                    (tab) => tab.id === settingsActiveTabId,
-                  )}
-                  steps={settingsWizardSteps}
-                  onStepClick={(stepIndex) =>
-                    setSettingsActiveTabId(SETTINGS_SHELL_TABS[stepIndex].id)
-                  }
-                  className="command-center-settings-wizard"
-                />
-                {settingsOrgLevelField}
-              </div>
-            )}
-          </div>
-        </Card>
+                Back
+              </Button>
+              <Button
+                type="button"
+                buttonType="theme"
+                variant="primary"
+                disabled={isLastWizardStep}
+                onClick={() => goToWizardStep(settingsWizardIndex + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </div>
       )}
       </ShellLayout>
       {navPanelOpen && (
@@ -2633,7 +2997,7 @@ function HomeShell() {
           onItemSelect={() => {
             setNavPanelOpen(false)
             setSettingsActiveTabId(SETTINGS_SHELL_TABS[0].id)
-            setSettingsDesign('design-2')
+            setSettingsDesign('design-1')
             setSettingsShellOpen(true)
           }}
         />
