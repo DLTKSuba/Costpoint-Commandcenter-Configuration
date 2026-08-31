@@ -2168,17 +2168,21 @@ function HomeShell() {
 
   const handleLeftSidebarItemActivate = useCallback(
     ({ item }: LeftSidebarItemActivateDetail) => {
-      if (item.label !== COMMAND_CENTER_NAV_LABEL) return
-      const nextBlank = !blankCommandCenter
-      setBlankCommandCenter(nextBlank)
-      setNavPanelOpen(nextBlank)
-      if (!nextBlank) {
-        setSettingsShellOpen(false)
-        setSettingsActiveTabId(SETTINGS_SHELL_TABS[0].id)
-        setSettingsDesign('design-1')
+      if (item.label === COMMAND_CENTER_NAV_LABEL) {
+        /* Command Center stays on its own screen; the rail item only shows or
+         * hides the flyout over it. */
+        setBlankCommandCenter(true)
+        setNavPanelOpen((open) => !open)
+        return
       }
+      /* Any other module leaves Command Center for the dashboard. */
+      setNavPanelOpen(false)
+      setBlankCommandCenter(false)
+      setSettingsShellOpen(false)
+      setSettingsActiveTabId(SETTINGS_SHELL_TABS[0].id)
+      setSettingsDesign('design-1')
     },
-    [blankCommandCenter],
+    [],
   )
 
   useEffect(() => {

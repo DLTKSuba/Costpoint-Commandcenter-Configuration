@@ -16,11 +16,11 @@ Compose with existing Harmony pieces (`ShellLayout`, `Card`, `TabStrip`, `LeftSi
 
 | Mode | When | Main card |
 |------|------|-----------|
-| Dashboard | User leaves Command Center (`blankCommandCenter === false`) | No panel header. Tab strip + Refresh. Expiration dashboard / detail tabs. |
-| Command Center | User activates the **Command Center** rail item from the dashboard | Empty card: no panel header, no well, no checkbox. No View dropdown. No tab strip. Flyout is open. |
+| Dashboard | User activates any other module rail item (`blankCommandCenter === false`) | No panel header. Tab strip + Refresh. Expiration dashboard / detail tabs. |
+| Command Center | User returns from the dashboard via the **Command Center** rail item, before picking a flyout item | Empty card: no panel header, no well, no checkbox. No View dropdown. No tab strip. Flyout is open. |
 | Configure Settings | Initial load, and after **Configure Settings** in the flyout | First card: **Configure Settings** header + window controls and the inset well with **Enable Dela AI assistance**. Second card below it: header **Role Based Setup** + window controls. |
 
-Leaving Command Center (click the rail item again) restores the dashboard and closes the settings shell.
+Leaving Command Center (click any other module in the rail) restores the dashboard and closes the settings shell.
 
 ## Chrome (presentation)
 
@@ -70,12 +70,10 @@ Collapsed rail shows icons only. Hover expands and reveals labels (Harmony `.lef
 
 ### Command Center click
 
-`LeftSidebar` `onItemActivate` → `ShellLayout` `onLeftSidebarItemActivate` → only handle `item.label === 'Command Center'`.
+`LeftSidebar` `onItemActivate` → `ShellLayout` `onLeftSidebarItemActivate`, which branches on `item.label === 'Command Center'`.
 
-Toggle:
-
-1. From the dashboard, `blankCommandCenter` and `navPanelOpen` become `true` together (enter Command Center + open flyout). The Configure Settings screen stays hidden until the flyout item is picked. Page load already shows Configure Settings, so this path is only after leaving Command Center.
-2. Second click sets both `false`, `settingsShellOpen` `false`, settings tab back to Accountant.
+1. **Command Center item:** always sets `blankCommandCenter = true` and **toggles `navPanelOpen` only**. It never hides the Configure Settings screen behind it — the rail item's one job is showing or hiding the flyout, so clicking it always brings up the panel with **Configure Settings**.
+2. **Any other module item:** leaves Command Center — `navPanelOpen` and `blankCommandCenter` `false`, `settingsShellOpen` `false`, settings tab back to Accountant, design back to Design Proposal. This is the only way back to the dashboard, so keep it wired.
 3. While Command Center is on, that rail item is `active` (solid blue clicked state). Dashboard mode keeps **Accounting** as the default active module.
 
 ### Flyout (`LeftNavPanel`)
@@ -88,7 +86,7 @@ Toggle:
 
 ### Configure Settings click
 
-`onItemSelect`: `navPanelOpen = false`, reset settings tab to Accountant, `settingsShellOpen = true`. Flyout disappears. Second shell appears below the first.
+`onItemSelect`: `navPanelOpen = false`, `settingsShellOpen = true`, settings tab back to Accountant and design back to Design Proposal. Flyout disappears and the screen returns to the default Configure Settings page (the same one shown on load), whatever the user had changed.
 
 ## Do not
 
