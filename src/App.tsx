@@ -660,7 +660,7 @@ const ACCOUNTING_NAV_ITEMS: LeftNavPanelItem[] = [
     accountingFolder('General Ledger Utilities'),
     accountingFolder('General Ledger Interfaces'),
     accountingFolder('General Ledger Controls', [
-      { label: 'Configure General Ledger Settings' },
+      { label: 'Configure General Ledger Settings', interactive: false },
       { label: 'Configure Close Agent Settings' },
       { label: 'Configure Company Information' },
       { label: 'Closing Day Codes' },
@@ -3515,17 +3515,12 @@ function HomeShell() {
               : 'Configure General Ledger Settings'
           }
           onItemSelect={(item) => {
-            if (
-              item.label !== 'Configure General Ledger Settings' &&
-              item.label !== 'Configure Close Agent Settings'
-            ) {
+            if (item.label !== 'Configure Close Agent Settings') {
               return
             }
             setNavPanelId(null)
             setBlankCommandCenter(true)
-            setSettingsPage(
-              item.label === 'Configure General Ledger Settings' ? 'general-ledger' : 'close-agent',
-            )
+            setSettingsPage('close-agent')
             setSettingsActiveTabId(SETTINGS_SHELL_TABS[0].id)
             setSettingsDesign('design-1')
             setSettingsShellOpen(true)

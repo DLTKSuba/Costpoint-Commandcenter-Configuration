@@ -7,6 +7,8 @@ export interface LeftNavPanelItem {
   label: string
   /** Renders the +/- expander affordance on the trailing edge. */
   expandable?: boolean
+  /** Leaf that is shown in the tree but cannot be activated. Defaults to true. */
+  interactive?: boolean
   children?: LeftNavPanelItem[]
 }
 
@@ -47,8 +49,31 @@ function NavTree({
       {items.map((item) => {
         const isBranch = itemIsBranch(item)
         const isOpen = isBranch && expanded.has(item.label)
+        const isInteractive = item.interactive !== false
         const isSelected = !isBranch && selected === item.label
         const nested = isOpen ? (item.children ?? []) : []
+        const itemClassName = clsx(
+          'left-nav-panel__item',
+          isOpen && 'is-expanded',
+          isSelected && 'is-selected',
+          !isBranch && !isInteractive && 'is-static',
+        )
+        const itemContent = (
+          <>
+            <span className="left-nav-panel__label">{item.label}</span>
+            {isSelected && (
+              <Icon name="star" size="sm" className="left-nav-panel__favorite" aria-hidden />
+            )}
+            {isBranch && (
+              <Icon
+                name={isOpen ? 'minus' : 'plus'}
+                size="sm"
+                className="left-nav-panel__expander"
+                aria-hidden
+              />
+            )}
+          </>
+        )
 
         return (
           <li
@@ -59,30 +84,24 @@ function NavTree({
               isSelected && 'is-selected',
             )}
           >
-            <button
-              type="button"
-              className={clsx(
-                'left-nav-panel__item',
-                isOpen && 'is-expanded',
-                isSelected && 'is-selected',
-              )}
-              aria-expanded={isBranch ? isOpen : undefined}
-              aria-current={isSelected ? 'page' : undefined}
-              onClick={() => (isBranch ? onToggle(item.label) : onSelect(item))}
-            >
-              <span className="left-nav-panel__label">{item.label}</span>
-              {isSelected && (
-                <Icon name="star" size="sm" className="left-nav-panel__favorite" aria-hidden />
-              )}
-              {isBranch && (
-                <Icon
-                  name={isOpen ? 'minus' : 'plus'}
-                  size="sm"
-                  className="left-nav-panel__expander"
-                  aria-hidden
-                />
-              )}
-            </button>
+            {isBranch || isInteractive ? (
+              <button
+                type="button"
+                className={itemClassName}
+                aria-expanded={isBranch ? isOpen : undefined}
+                aria-current={isSelected ? 'page' : undefined}
+                onClick={() => (isBranch ? onToggle(item.label) : onSelect(item))}
+              >
+                {itemContent}
+              </button>
+            ) : (
+              <div
+                className={itemClassName}
+                aria-current={isSelected ? 'page' : undefined}
+              >
+                {itemContent}
+              </div>
+            )}
             {nested.length > 0 && (
               <NavTree
                 items={nested}

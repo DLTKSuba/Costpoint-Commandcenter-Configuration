@@ -84,7 +84,11 @@
   min-width: 0;
 }
 
-.left-nav-panel__item:hover {
+.left-nav-panel__item.is-static {
+  cursor: default;
+}
+
+.left-nav-panel__item:hover:not(.is-static) {
   background-color: var(--cc-nav-hover-bg);
 }
 
