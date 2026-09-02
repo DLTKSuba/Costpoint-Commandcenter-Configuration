@@ -19,6 +19,8 @@ export interface DialogProps {
   tertiaryLabel?: string
   /** When the tertiary button is clicked, called before onClose. Ignored when footer is provided. */
   onTertiaryClick?: () => void
+  /** Controls rendered in the header, left of the close button (e.g. a query menu, window controls). */
+  headerActions?: ReactNode
   children?: ReactNode
   footer?: ReactNode
 }
@@ -34,6 +36,7 @@ export function Dialog({
   resizable = true,
   tertiaryLabel,
   onTertiaryClick,
+  headerActions,
   children,
   footer,
 }: DialogProps) {
@@ -128,15 +131,18 @@ export function Dialog({
           <h2 className="dialog__title" id={titleId}>
             {title}
           </h2>
-          <button
-            type="button"
-            className="dialog__close"
-            data-dialog-close
-            aria-label="Close"
-            onClick={onClose}
-          >
-            <Icon name="x-mark" />
-          </button>
+          <div className="dialog__header-actions">
+            {headerActions}
+            <button
+              type="button"
+              className="dialog__close"
+              data-dialog-close
+              aria-label="Close"
+              onClick={onClose}
+            >
+              <Icon name="x-mark" />
+            </button>
+          </div>
         </div>
         <div className="dialog__body">
           {children ?? (

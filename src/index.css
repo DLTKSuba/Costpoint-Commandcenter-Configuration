@@ -197,6 +197,19 @@
   min-height: 0;
 }
 
+/*
+ * Costpoint settings pages carry their title inside the card instead of in the
+ * page header, so it sits on the body's own padding — flush with the well's
+ * left edge below it — with no title bar rule or window controls.
+ */
+.command-center-shell-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+}
+
 /* Command Center before Configure Settings is picked: the shell stays an empty
  * workspace, so the body keeps a canvas height instead of collapsing to a sliver. */
 .command-center-blank-canvas {
@@ -220,8 +233,508 @@
 
 .command-center-ai-settings {
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
+  gap: var(--space-3);
   padding: var(--space-3);
+  overflow: visible;
+}
+
+.command-center-close-job {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  /* Start the label under the checkbox label above, past the 18px box and its gap. */
+  padding-left: calc(var(--space-5) + var(--space-1-5));
+}
+
+.command-center-close-job .input-wrapper {
+  width: var(--dropdown-min-width);
+  min-width: var(--dropdown-min-width);
+}
+
+.command-center-close-job__lookup {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.command-center-close-job__lookup:hover {
+  color: var(--text-primary);
+}
+
+/*
+ * Costpoint Lookup window: full-width dense grid, compact chrome, blue top edge.
+ * Selectors carry both the dialog and table class so they outrank the base
+ * `.table` rules that round the corners and drop the column dividers.
+ */
+.close-job-lookup {
+  width: var(--dialog-max-width-medium);
+  max-width: var(--dialog-max-width-medium);
+  border: 1px solid var(--border-color);
+  border-top: var(--space-1) solid var(--theme-primary);
+  border-radius: var(--radius-sm);
+}
+
+.close-job-lookup .dialog__header {
+  padding: var(--space-1-5) var(--space-3);
+  background-color: var(--elevated-bg);
+}
+
+.close-job-lookup .dialog__title {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+}
+
+.close-job-lookup .dialog__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.close-job-lookup .dialog__body {
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  background-color: var(--surface-bg);
+}
+
+.close-job-lookup .dialog__footer {
+  padding: var(--space-2) var(--space-5);
+  background-color: var(--elevated-bg);
+}
+
+.close-job-lookup .dialog__footer-actions .btn {
+  height: auto;
+  min-width: var(--space-16);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
+}
+
+/* Query menu: compact trigger outlined in the Costpoint blue. */
+.close-job-lookup__query .dropdown__trigger {
+  height: auto;
+  min-width: var(--space-24);
+  padding: var(--space-0-5) var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--theme-primary);
+  border-color: var(--theme-primary);
+  border-radius: var(--radius-sm);
+}
+
+.close-job-lookup__query .dropdown__chevron {
+  color: var(--theme-primary);
+}
+
+.close-job-lookup .table-wrapper {
+  border-radius: 0;
+  overflow: visible;
+}
+
+/*
+ * Fixed layout so the column widths hold the Costpoint proportions: the two long
+ * headers wrap to two lines and long comments truncate instead of stretching.
+ */
+.close-job-lookup .close-job-lookup__table {
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+  table-layout: fixed;
+  border-radius: 0;
+}
+
+.close-job-lookup .close-job-lookup__table thead th:nth-child(1) {
+  width: 2%;
+}
+
+.close-job-lookup .close-job-lookup__table thead th:nth-child(2) {
+  width: 13%;
+}
+
+.close-job-lookup .close-job-lookup__table thead th:nth-child(3) {
+  width: 19%;
+}
+
+.close-job-lookup .close-job-lookup__table thead th:nth-child(4) {
+  width: 11%;
+}
+
+.close-job-lookup .close-job-lookup__table thead th:nth-child(5) {
+  width: 9.5%;
+}
+
+.close-job-lookup .close-job-lookup__table thead th:nth-child(6) {
+  width: 8.5%;
+}
+
+.close-job-lookup .close-job-lookup__table thead th:nth-child(7) {
+  width: 23%;
+}
+
+.close-job-lookup .close-job-lookup__table thead th:nth-child(8) {
+  width: 14%;
+}
+
+.close-job-lookup .close-job-lookup__table thead tr th {
+  padding: var(--space-1) var(--space-2);
+  text-align: center;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  white-space: normal;
+  border: 1px solid var(--border-color);
+  border-radius: 0;
+}
+
+.close-job-lookup .close-job-lookup__table tbody tr {
+  cursor: pointer;
+}
+
+.close-job-lookup .close-job-lookup__table tbody tr td {
+  padding: var(--space-0-5) var(--space-2);
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.close-job-lookup .close-job-lookup__table tbody tr td:first-child {
+  border-left: 1px solid var(--border-color);
+}
+
+/* Selected row keeps the tint plus a blue outline, like the Costpoint grid. */
+.close-job-lookup .close-job-lookup__table tbody tr.table-row--selected td {
+  border-top-color: var(--theme-primary);
+  border-bottom-color: var(--theme-primary);
+}
+
+.close-job-lookup .close-job-lookup__table tbody tr.table-row--selected td:first-child {
+  border-left-color: var(--theme-primary);
+}
+
+.close-job-lookup .close-job-lookup__table tbody tr.table-row--selected td:last-child {
+  border-right-color: var(--theme-primary);
+}
+
+.close-job-lookup .close-job-lookup__table .close-job-lookup__select-column {
+  width: var(--space-6);
+  padding: 0 var(--space-1);
+  text-align: center;
+  color: var(--theme-primary);
+}
+
+.close-job-lookup__select-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-3);
+  height: var(--space-3);
+  color: var(--theme-primary);
+  background-color: var(--surface-bg);
+  border: 1px solid var(--theme-primary);
+  border-radius: var(--radius-sm);
+}
+
+.close-job-lookup .close-job-lookup__select-column svg {
+  width: var(--space-3);
+  height: var(--space-3);
+}
+
+/* Configure General Ledger Settings: dense Costpoint form matching the legacy panel. */
+.command-center-ai-settings:has(.general-ledger-settings) {
+  padding: var(--space-1);
+  align-items: stretch;
+}
+
+.general-ledger-settings__dela-well {
+  position: relative;
+  width: 100%;
+  align-self: stretch;
+}
+
+/* Nested Dela group reads as one of the form's group boxes, so its title takes
+ * the same legend treatment — fill matches this well's white body, not --surface-bg. */
+.general-ledger-settings__dela-well h3 {
+  position: absolute;
+  top: 0;
+  left: var(--space-2);
+  transform: translateY(-50%);
+  margin: 0;
+  padding-inline: var(--space-1);
+  background-color: #ffffff;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  color: var(--theme-primary);
+}
+
+/* Row gap leaves room for the legend headings that overhang each group's top border. */
+.general-ledger-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  font-size: var(--text-xs);
+}
+
+.general-ledger-settings__section {
+  position: relative;
+  min-width: 0;
+  padding: var(--space-2-5) var(--space-3) var(--space-2);
+  background-color: var(--surface-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+/* Legend-style heading: sits astride the group's top border, its own fill
+ * breaking the border line behind the text like the Costpoint group boxes. */
+.general-ledger-settings__section h3 {
+  position: absolute;
+  top: 0;
+  left: var(--space-2);
+  transform: translateY(-50%);
+  margin: 0;
+  padding-inline: var(--space-1);
+  background-color: var(--surface-bg);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  color: var(--theme-primary);
+}
+
+.general-ledger-settings__identity {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+  padding-top: var(--space-2);
+}
+
+.general-ledger-settings__field {
+  display: grid;
+  grid-template-columns: minmax(var(--space-16), max-content) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.general-ledger-settings__field > label,
+.general-ledger-settings__field .label {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+}
+
+.general-ledger-settings .input-wrapper {
+  min-width: 0;
+}
+
+.general-ledger-settings .input {
+  height: var(--space-6);
+  min-height: var(--space-6);
+  padding: 0 var(--space-2);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
+}
+
+/*
+ * Costpoint sizes each value to its data rather than the column: short codes
+ * stay compact, descriptions and FS lines get the wider box.
+ */
+.general-ledger-settings__two-column .input-wrapper {
+  max-width: calc(var(--space-24) * 1.5);
+}
+
+.general-ledger-settings__two-column
+  .general-ledger-settings__field--wide-value
+  .input-wrapper {
+  max-width: calc(var(--space-24) * 2.5);
+}
+
+.general-ledger-settings__field--code .input-wrapper {
+  max-width: var(--space-24);
+}
+
+.general-ledger-settings__identity .input-wrapper {
+  max-width: calc(var(--space-24) * 1.2);
+}
+
+.general-ledger-settings__identity
+  .general-ledger-settings__field:last-child
+  .input-wrapper {
+  max-width: calc(var(--space-24) * 2.2);
+}
+
+.general-ledger-settings__lookup {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.general-ledger-settings__lookup:hover {
+  color: var(--theme-primary);
+}
+
+.general-ledger-settings .checkbox-wrapper,
+.general-ledger-settings .radio-wrapper {
+  min-width: 0;
+}
+
+.general-ledger-settings .checkbox,
+.general-ledger-settings .radio {
+  min-height: var(--space-5);
+  gap: var(--space-1);
+}
+
+.general-ledger-settings .checkbox__box,
+.general-ledger-settings .radio__circle {
+  width: var(--space-4);
+  height: var(--space-4);
+}
+
+.general-ledger-settings .checkbox__label,
+.general-ledger-settings .radio__label {
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+}
+
+.general-ledger-settings__options-grid,
+.general-ledger-settings__two-column,
+.general-ledger-settings__matrix {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.general-ledger-settings__control-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.general-ledger-settings__field--compact {
+  grid-template-columns: max-content var(--space-14);
+}
+
+.general-ledger-settings__field--allow {
+  grid-template-columns: max-content var(--space-20);
+}
+
+.general-ledger-settings__two-column {
+  align-items: center;
+}
+
+.general-ledger-settings__two-column .general-ledger-settings__field {
+  grid-template-columns: var(--space-16) minmax(0, 1fr);
+}
+
+/* FS Line values are long, so the label takes only its text width. */
+.general-ledger-settings__two-column .general-ledger-settings__field--wide-value {
+  grid-template-columns: max-content minmax(0, 1fr);
+}
+
+.general-ledger-settings__field--wide-value .input-wrapper {
+  max-width: none;
+}
+
+/* Read-only values (company id, currency name) carry the Costpoint grey fill. */
+.general-ledger-settings .input[readonly] {
+  background-color: var(--input-disabled-bg);
+}
+
+/* Sections are direct grid items, so each row's left and right group share a
+ * baseline and an equal height like the paired Costpoint rows. */
+.general-ledger-settings__matrix {
+  gap: var(--space-2) var(--space-1);
+}
+
+.general-ledger-settings__radio-row,
+.general-ledger-settings__journal-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-1);
+}
+
+.general-ledger-settings__journal-options {
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 0;
+}
+
+/* ISO Code and the currency description share one row, as in Costpoint. */
+.general-ledger-settings__currency-fields {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.general-ledger-settings__currency-fields .general-ledger-settings__field {
+  grid-template-columns: var(--space-16) var(--space-20);
+}
+
+.general-ledger-settings__currency-fields > .input-wrapper {
+  max-width: calc(var(--space-24) * 3);
+}
+
+/* Sits below the well's bottom border, indented to the well's own content edge. */
+.general-ledger-settings__tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-height: var(--space-9);
+  padding: var(--space-1) var(--space-3) 0;
+}
+
+.general-ledger-settings__tabs button {
+  height: var(--space-8);
+  padding: 0 var(--space-4);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--theme-primary);
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.general-ledger-settings__tabs button.is-active {
+  font-weight: var(--font-semibold);
+}
+
+.general-ledger-settings__tabs button:last-child {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  margin-left: var(--space-2);
+  padding: 0;
+  border: 1px solid var(--theme-primary);
+  border-radius: var(--radius-full);
+}
+
+@media (max-width: 900px) {
+  .general-ledger-settings__options-grid,
+  .general-ledger-settings__two-column,
+  .general-ledger-settings__matrix {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
 }
 
 /* Second shell opened from Configure Settings, plus its Back/Next bar. */

@@ -24,8 +24,9 @@ import { Dialog } from './components/harmony/Dialog'
 import { Dropdown } from './components/harmony/Dropdown'
 import { InteractionRulesPanel } from './components/harmony/InteractionRulesPanel'
 import { Label } from './components/harmony/Label'
-import { LeftNavPanel } from './components/harmony/LeftNavPanel'
+import { LeftNavPanel, type LeftNavPanelItem } from './components/harmony/LeftNavPanel'
 import { NumberInput } from './components/harmony/NumberInput'
+import { RadioButton } from './components/harmony/RadioButton'
 import { Stepper } from './components/harmony/Stepper'
 import { TabStrip, type TabStripTab } from './components/harmony/TabStrip'
 import { Table } from './components/harmony/Table'
@@ -90,6 +91,7 @@ const THEME_SHELL_PROPS: Record<string, Partial<ShellLayoutProps>> = {
 
 /** Rail item whose label opens the Command Center flyout. */
 const COMMAND_CENTER_NAV_LABEL = 'Command Center'
+const ACCOUNTING_NAV_LABEL = 'Accounting'
 
 /** Costpoint application tabs inside the Configure Settings well. */
 const SETTINGS_SHELL_TABS: ReadonlyArray<{ id: string; label: string }> = [
@@ -136,6 +138,105 @@ const ORG_LEVEL_OPTIONS = [
   { value: 'level-2', label: 'Level 2' },
   { value: 'level-3', label: 'Level 3' },
   { value: 'level-4', label: 'Level 4' },
+]
+
+const CLOSE_JOB_LOOKUP_QUERY_OPTIONS = [
+  { value: 'query', label: 'Query' },
+  { value: 'advanced-query', label: 'Advanced query' },
+  { value: 'clear-query', label: 'Clear query' },
+]
+
+const CLOSE_JOB_LOOKUP_ROWS = [
+  {
+    jobId: 'BNPREFRESH',
+    description: 'B&P REFRESH PROCESS',
+    jobGroup: '',
+    failureOption: 'D',
+    defaultPriority: 1,
+    comments: '',
+    creator: 'CPSUPERUSER',
+  },
+  {
+    jobId: 'MONTHLY',
+    description: 'Monthly',
+    jobGroup: 'MONTHLY',
+    failureOption: 'D',
+    defaultPriority: 50,
+    comments: 'Monthly processing',
+    creator: 'X1077',
+  },
+  {
+    jobId: 'PRJ_KEY_RPTS',
+    description: 'Key Project Reports',
+    jobGroup: '',
+    failureOption: 'D',
+    defaultPriority: 50,
+    comments: '',
+    creator: 'X1101',
+  },
+  {
+    jobId: 'S_CR_POSTS',
+    description: 'Posting Cash Receipts',
+    jobGroup: '',
+    failureOption: 'D',
+    defaultPriority: 50,
+    comments: 'Print cash receipts edit report and post',
+    creator: 'X1114',
+  },
+  {
+    jobId: 'S_FIXEDASSET',
+    description: 'Standard Fixed Asset Closing',
+    jobGroup: '',
+    failureOption: 'D',
+    defaultPriority: 50,
+    comments: 'Compute, post and print reports for fixed assets',
+    creator: 'X1114',
+  },
+  {
+    jobId: 'S_GLRPTPKG',
+    description: 'General Ledger Rpting Package',
+    jobGroup: '',
+    failureOption: 'D',
+    defaultPriority: 50,
+    comments: 'Update GL reporting tables and run GL reports',
+    creator: 'X1114',
+  },
+  {
+    jobId: 'S_GL_POST',
+    description: 'Post Adjusting JE Entries',
+    jobGroup: '',
+    failureOption: 'D',
+    defaultPriority: 50,
+    comments: 'Post adjusting JE entries',
+    creator: 'X1114',
+  },
+  {
+    jobId: 'S_POOLS',
+    description: 'Posting Pool Allocations',
+    jobGroup: '',
+    failureOption: 'D',
+    defaultPriority: 50,
+    comments: 'Print allocations and posting',
+    creator: 'X1114',
+  },
+  {
+    jobId: 'S_POST_CASH',
+    description: 'Post cash disbursements',
+    jobGroup: '',
+    failureOption: 'D',
+    defaultPriority: 50,
+    comments: 'Post cash disbursements',
+    creator: 'X1114',
+  },
+  {
+    jobId: 'S_VOUCHERS',
+    description: 'Voucher Posting',
+    jobGroup: '',
+    failureOption: 'D',
+    defaultPriority: 50,
+    comments: 'Print voucher edit report and post unposted approvals',
+    creator: 'X1114',
+  },
 ]
 
 const REPORTING_PERIOD_OPTIONS = [
@@ -202,7 +303,7 @@ const DEFAULT_ROLE_SETTINGS: Record<string, string | number | boolean> = {
  * Minimize / maximize / close trio that Costpoint panel headers carry on the
  * right. Presentational for now — the shells are not yet resizable.
  */
-function PanelWindowControls() {
+function PanelWindowControls({ showClose = true }: { showClose?: boolean }) {
   return (
     <>
       <button className="card__icon-btn" type="button" aria-label="Minimize">
@@ -211,10 +312,281 @@ function PanelWindowControls() {
       <button className="card__icon-btn" type="button" aria-label="Maximize">
         <Icon name="window-plain" size="sm" />
       </button>
-      <button className="card__icon-btn" type="button" aria-label="Close">
-        <Icon name="x-mark" size="sm" />
-      </button>
+      {showClose && (
+        <button className="card__icon-btn" type="button" aria-label="Close">
+          <Icon name="x-mark" size="sm" />
+        </button>
+      )}
     </>
+  )
+}
+
+function GeneralLedgerLookupInput({
+  id,
+  defaultValue,
+  ariaLabel,
+}: {
+  id: string
+  defaultValue: string
+  ariaLabel: string
+}) {
+  return (
+    <Input
+      id={id}
+      defaultValue={defaultValue}
+      trailing={
+        <button
+          type="button"
+          className="general-ledger-settings__lookup"
+          aria-label={ariaLabel}
+        >
+          <Icon name="magnifying-glass" size="sm" />
+        </button>
+      }
+    />
+  )
+}
+
+function CloseProcessThroughDelaFields({
+  checked,
+  onCheckedChange,
+  closeJobLookup,
+  onCloseJobChange,
+  onLookupOpen,
+}: {
+  checked: boolean
+  onCheckedChange: (checked: boolean) => void
+  closeJobLookup: string
+  onCloseJobChange: (value: string) => void
+  onLookupOpen: () => void
+}) {
+  return (
+    <>
+      <Checkbox
+        id="enable-close-process-dela"
+        label="Enable Close Process Through Dela"
+        checked={checked}
+        onChange={(event) => onCheckedChange(event.target.checked)}
+      />
+      {checked && (
+        <div className="command-center-close-job">
+          <Label htmlFor="close-job-lookup">Close job</Label>
+          <Input
+            id="close-job-lookup"
+            placeholder="-select-"
+            value={closeJobLookup}
+            onChange={(event) => onCloseJobChange(event.target.value)}
+            trailing={
+              <button
+                type="button"
+                className="command-center-close-job__lookup"
+                aria-label="Look up close job"
+                onClick={onLookupOpen}
+              >
+                <Icon name="magnifying-glass" size="sm" />
+              </button>
+            }
+          />
+        </div>
+      )}
+    </>
+  )
+}
+
+function GeneralLedgerSettingsPanel({ closeProcessWell }: { closeProcessWell: ReactNode }) {
+  return (
+    <div className="general-ledger-settings">
+      <section
+        className="general-ledger-settings__section general-ledger-settings__identity"
+        aria-label="Company information"
+      >
+        <div className="general-ledger-settings__field">
+          <Label htmlFor="gl-company" required>
+            Company
+          </Label>
+          <Input id="gl-company" defaultValue="1" readOnly />
+        </div>
+        <div className="general-ledger-settings__field">
+          <Label htmlFor="gl-company-name" required>
+            Name
+          </Label>
+          <Input id="gl-company-name" defaultValue="Company 1" />
+        </div>
+      </section>
+
+      <section className="general-ledger-settings__section general-ledger-settings__options">
+        <h3>Options</h3>
+        <div className="general-ledger-settings__options-grid">
+          <div className="general-ledger-settings__control-stack">
+            <Checkbox label="Validate Accounts for Organizations" defaultChecked />
+            <Checkbox label="Update Entry Info when editing a JE" defaultChecked />
+            <Checkbox label="Post Labor Distribution to GL as Summary Entry" defaultChecked />
+            <div className="general-ledger-settings__field general-ledger-settings__field--compact">
+              <Label htmlFor="gl-periods-open" required>
+                No of Periods to Keep Open
+              </Label>
+              <Input id="gl-periods-open" defaultValue="99" type="number" />
+            </div>
+          </div>
+          <div className="general-ledger-settings__control-stack">
+            <Checkbox
+              label="Posting Validation for FY/Period/Subperiod"
+              defaultChecked
+            />
+            <Checkbox label="Allow Reversing Entry Creation in a Not Available FY/Period/Subperiod" />
+            <Checkbox label="Prevent posting of CR and CD journals in a Not Available FY/Period/Subperiod" />
+            <div className="general-ledger-settings__field general-ledger-settings__field--allow">
+              <Label htmlFor="gl-non-balancing" required>
+                Non-Balancing JE&apos;s Password
+              </Label>
+              <Input id="gl-non-balancing" defaultValue="ALLOW" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {closeProcessWell}
+
+      <section className="general-ledger-settings__section">
+        <h3>Retained Earnings Info</h3>
+        <div className="general-ledger-settings__two-column">
+          <div className="general-ledger-settings__field">
+            <Label htmlFor="gl-retained-account">Account</Label>
+            <GeneralLedgerLookupInput
+              id="gl-retained-account"
+              defaultValue="00311"
+              ariaLabel="Look up retained earnings account"
+            />
+          </div>
+          <div className="general-ledger-settings__field general-ledger-settings__field--wide-value">
+            <Label htmlFor="gl-retained-fs-line">FS Line</Label>
+            <GeneralLedgerLookupInput
+              id="gl-retained-fs-line"
+              defaultValue="Current Year Retained Earnings"
+              ariaLabel="Look up retained earnings FS line"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="general-ledger-settings__section">
+        <h3>Update G/L Beginning Balances Defaults</h3>
+        <div className="general-ledger-settings__two-column">
+          <Checkbox label="Include Adjustment Periods" defaultChecked />
+          <Checkbox label="Allow this default to be changed in Update process" defaultChecked />
+        </div>
+      </section>
+
+      {/* Paired groups: each grid row holds the left and right group of one
+       * Costpoint row (Currency/Intercompany, OCI/Journal, Headings/Revaluation). */}
+      <div className="general-ledger-settings__matrix">
+        <section className="general-ledger-settings__section general-ledger-settings__currency">
+          <h3>Functional Currency</h3>
+          <div className="general-ledger-settings__currency-fields">
+            <div className="general-ledger-settings__field">
+              <Label htmlFor="gl-iso-code">ISO Code</Label>
+              <Input id="gl-iso-code" defaultValue="USD" />
+            </div>
+            <Input
+              id="gl-currency-description"
+              aria-label="Functional currency description"
+              defaultValue="U. S. Dollar"
+              readOnly
+            />
+          </div>
+        </section>
+        <section className="general-ledger-settings__section">
+          <h3>Intercompany Receivables Posting Subperiod</h3>
+          <Checkbox label="Use Maximum Open Subperiod" defaultChecked />
+        </section>
+
+        <section className="general-ledger-settings__section">
+          <h3>Other Comprehensive Income Info</h3>
+          <div className="general-ledger-settings__radio-row">
+            <RadioButton
+              name="oci-presentation"
+              value="income-statement"
+              label="OCI on the Income statement"
+              size="small"
+            />
+            <RadioButton
+              name="oci-presentation"
+              value="separate-statement"
+              label="Separate Statement of CI"
+              size="small"
+              defaultChecked
+            />
+          </div>
+          <div className="general-ledger-settings__two-column">
+            <div className="general-ledger-settings__field">
+              <Label htmlFor="gl-oci-account">Account</Label>
+              <GeneralLedgerLookupInput
+                id="gl-oci-account"
+                defaultValue="JRVAL-012"
+                ariaLabel="Look up OCI account"
+              />
+            </div>
+            <div className="general-ledger-settings__field general-ledger-settings__field--wide-value">
+              <Label htmlFor="gl-oci-fs-line">FS Line</Label>
+              <GeneralLedgerLookupInput
+                id="gl-oci-fs-line"
+                defaultValue="Other Comprehensive Income -FS"
+                ariaLabel="Look up OCI FS line"
+              />
+            </div>
+          </div>
+        </section>
+        <section className="general-ledger-settings__section general-ledger-settings__journal">
+          <h3>Print Journal For</h3>
+          <div className="general-ledger-settings__journal-options">
+            <Checkbox label="Labor" defaultChecked />
+            <Checkbox label="Reference 1" />
+            <Checkbox label="Reference 2" />
+          </div>
+        </section>
+
+        <section className="general-ledger-settings__section">
+          <h3>Data Entry Headings</h3>
+          <div className="general-ledger-settings__two-column">
+            <div className="general-ledger-settings__field general-ledger-settings__field--code">
+              <Label htmlFor="gl-reference-1" required>
+                Reference 1
+              </Label>
+              <Input id="gl-reference-1" defaultValue="REF00001" />
+            </div>
+            <div className="general-ledger-settings__field general-ledger-settings__field--code">
+              <Label htmlFor="gl-reference-2" required>
+                Reference 2
+              </Label>
+              <Input id="gl-reference-2" defaultValue="REF00002" />
+            </div>
+          </div>
+        </section>
+        <section className="general-ledger-settings__section">
+          <h3>Balance Sheet Revaluation Options</h3>
+          <Checkbox label="Create Revaluation as Net" defaultChecked />
+        </section>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Costpoint keeps the subtask links outside the form's frame, so this row is
+ * rendered after the shell's well rather than inside it.
+ */
+function GeneralLedgerSettingsTabs() {
+  return (
+    <nav className="general-ledger-settings__tabs" aria-label="General Ledger settings sections">
+      <button type="button" className="is-active">
+        Corporate Settings
+      </button>
+      <button type="button">Approval Settings</button>
+      <button type="button">Batch Job Email Notification</button>
+      <button type="button" aria-label="More settings">
+        <Icon name="ellipsis-vertical" size="sm" />
+      </button>
+    </nav>
   )
 }
 
@@ -256,7 +628,7 @@ const COMMAND_CENTER_SIDEBAR_SECTIONS: LeftSidebarSection[] = [
     items: [
       { icon: 'magnifying-glass', label: 'Search' },
       { icon: 'squares-2x2', label: COMMAND_CENTER_NAV_LABEL },
-      { icon: 'clipboard-document-list', label: 'Accounting', active: true },
+      { icon: 'clipboard-document-list', label: ACCOUNTING_NAV_LABEL, active: true },
       { icon: 'cube', label: 'Materials' },
       { icon: 'users', label: 'People' },
       { icon: 'clock', label: 'Time' },
@@ -265,6 +637,45 @@ const COMMAND_CENTER_SIDEBAR_SECTIONS: LeftSidebarSection[] = [
     ],
   },
 ]
+
+function accountingFolder(label: string, children: LeftNavPanelItem[] = []): LeftNavPanelItem {
+  return { label, expandable: true, children }
+}
+
+/** Costpoint Accounting module tree matching the product flyout. */
+const ACCOUNTING_NAV_ITEMS: LeftNavPanelItem[] = [
+  accountingFolder('General Ledger', [
+    accountingFolder('Company Calendar'),
+    accountingFolder('Organizations'),
+    accountingFolder('Accounts'),
+    accountingFolder('Reorganizations'),
+    accountingFolder('Reference Numbers'),
+    accountingFolder('Journal Entry Processing'),
+    accountingFolder('Multi-Company Processing'),
+    accountingFolder('Sales and Value Added Tax Processing'),
+    accountingFolder('General Ledger Beginning Balances'),
+    accountingFolder('General Ledger Budgets'),
+    accountingFolder('Financial Statement Configuration'),
+    accountingFolder('General Ledger Reports/Inquiries'),
+    accountingFolder('General Ledger Utilities'),
+    accountingFolder('General Ledger Interfaces'),
+    accountingFolder('General Ledger Controls', [
+      { label: 'Configure General Ledger Settings' },
+      { label: 'Configure Close Agent Settings' },
+      { label: 'Configure Company Information' },
+      { label: 'Closing Day Codes' },
+      { label: 'Closing Plan Categories' },
+    ]),
+  ]),
+  accountingFolder('Multicurrency'),
+  accountingFolder('Accounts Payable'),
+  accountingFolder('Accounts Receivable'),
+  accountingFolder('Cash Management'),
+  accountingFolder('Fixed Assets'),
+  accountingFolder('Consolidations'),
+]
+
+const ACCOUNTING_NAV_DEFAULT_EXPANDED = ['General Ledger', 'General Ledger Controls']
 
 const REQ_MAIN_TAB_IDS = ['requisitions'] as const
 
@@ -2142,14 +2553,23 @@ function HomeShell() {
   const dailyChartIteration: DailyChartIteration = 'iteration1'
   const [expandedContractIds, setExpandedContractIds] = useState<string[]>([])
   const [interactionRulesOpen, setInteractionRulesOpen] = useState(false)
-  const [navPanelOpen, setNavPanelOpen] = useState(false)
+  const [navPanelId, setNavPanelId] = useState<'command-center' | 'accounting' | null>(null)
   /** Command Center rail item swaps the workspace for an empty canvas. */
   const [blankCommandCenter, setBlankCommandCenter] = useState(true)
   /** Configure Settings adds a second shell below the empty canvas. */
   const [settingsShellOpen, setSettingsShellOpen] = useState(true)
+  const [settingsPage, setSettingsPage] = useState<
+    'command-center' | 'general-ledger' | 'close-agent'
+  >('command-center')
   const [settingsActiveTabId, setSettingsActiveTabId] = useState(SETTINGS_SHELL_TABS[0].id)
   const [settingsDesign, setSettingsDesign] = useState('design-1')
   const [delaAiEnabled, setDelaAiEnabled] = useState(false)
+  const [closeProcessThroughDela, setCloseProcessThroughDela] = useState(false)
+  const [closeJobLookup, setCloseJobLookup] = useState('')
+  const [closeJobLookupOpen, setCloseJobLookupOpen] = useState(false)
+  const [closeJobLookupQuery, setCloseJobLookupQuery] = useState('query')
+  /** Value the field held when the lookup opened, so Cancel can put it back. */
+  const closeJobBeforeLookupRef = useRef('')
   /** Org level is scoped per application tab, so each tab keeps its own choice. */
   const [orgLevelByTab, setOrgLevelByTab] = useState<Record<string, string>>({})
   const [roleSettings, setRoleSettings] =
@@ -2172,13 +2592,27 @@ function HomeShell() {
         /* Command Center stays on its own screen; the rail item only shows or
          * hides the flyout over it. */
         setBlankCommandCenter(true)
-        setNavPanelOpen((open) => !open)
+        setSettingsPage('command-center')
+        setNavPanelId((id) => (id === 'command-center' ? null : 'command-center'))
+        return
+      }
+      if (item.label === ACCOUNTING_NAV_LABEL) {
+        /* The Accounting flyout always opens with a settings item selected, so
+         * that item's page is what shows behind it — General Ledger unless the
+         * Close Agent page is the one already selected. */
+        setBlankCommandCenter(true)
+        setSettingsPage((page) => (page === 'close-agent' ? page : 'general-ledger'))
+        setSettingsShellOpen(true)
+        setSettingsActiveTabId(SETTINGS_SHELL_TABS[0].id)
+        setSettingsDesign('design-1')
+        setNavPanelId((id) => (id === 'accounting' ? null : 'accounting'))
         return
       }
       /* Any other module leaves Command Center for the dashboard. */
-      setNavPanelOpen(false)
+      setNavPanelId(null)
       setBlankCommandCenter(false)
       setSettingsShellOpen(false)
+      setSettingsPage('command-center')
       setSettingsActiveTabId(SETTINGS_SHELL_TABS[0].id)
       setSettingsDesign('design-1')
     },
@@ -2186,17 +2620,17 @@ function HomeShell() {
   )
 
   useEffect(() => {
-    if (!navPanelOpen) return
+    if (navPanelId == null) return
 
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target as Node
       const insidePanel = document.querySelector('.left-nav-panel')?.contains(target) ?? false
       const insideRail =
         document.querySelector('.shell-layout__left-sidebar')?.contains(target) ?? false
-      if (!insidePanel && !insideRail) setNavPanelOpen(false)
+      if (!insidePanel && !insideRail) setNavPanelId(null)
     }
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setNavPanelOpen(false)
+      if (e.key === 'Escape') setNavPanelId(null)
     }
 
     document.addEventListener('pointerdown', onPointerDown)
@@ -2205,7 +2639,7 @@ function HomeShell() {
       document.removeEventListener('pointerdown', onPointerDown)
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [navPanelOpen])
+  }, [navPanelId])
 
   const toggleContractExpanded = useCallback((rowId: string) => {
     setExpandedContractIds((prev) =>
@@ -2702,19 +3136,27 @@ function HomeShell() {
   )
 
 
-  /* On the Command Center screen the rail highlight moves to its own item. */
+  /* Settings pages keep the rail highlight on the module that launched them. */
   const leftSidebarSections = useMemo(
     () =>
       blankCommandCenter
         ? COMMAND_CENTER_SIDEBAR_SECTIONS.map((section) => ({
             items: section.items.map((item) => ({
               ...item,
-              active: item.label === COMMAND_CENTER_NAV_LABEL,
+              active:
+                item.label ===
+                (settingsPage === 'close-agent' || settingsPage === 'general-ledger'
+                  ? ACCOUNTING_NAV_LABEL
+                  : COMMAND_CENTER_NAV_LABEL),
             })),
           }))
         : COMMAND_CENTER_SIDEBAR_SECTIONS,
-    [blankCommandCenter],
+    [blankCommandCenter, settingsPage],
   )
+
+  /* Costpoint application pages carry no page or panel title of their own. */
+  const isCostpointSettingsPage =
+    settingsPage === 'close-agent' || settingsPage === 'general-ledger'
 
   return (
     <>
@@ -2723,9 +3165,10 @@ function HomeShell() {
         className="command-center-shell"
         leftSidebarSections={leftSidebarSections}
         onLeftSidebarItemActivate={handleLeftSidebarItemActivate}
-        pageHeaderTitle="Command Center"
+        pageHeaderTitle={isCostpointSettingsPage ? '' : 'Command Center'}
         pageHeaderShowDefaultButtons={false}
         pageHeaderActions={
+          isCostpointSettingsPage ? undefined : (
           <Dropdown
             id="settings-design-picker"
             className="command-center-design-picker"
@@ -2734,17 +3177,29 @@ function HomeShell() {
             value={settingsDesign}
             onChange={setSettingsDesign}
           />
+          )
         }
       >
       <Card
         primary
         elevated
         className="command-center-home"
-        withHeader={settingsShellOpen}
-        headerTitle={settingsShellOpen ? 'Configure Settings' : undefined}
-        headerActions={settingsShellOpen ? <PanelWindowControls /> : undefined}
+        withHeader={settingsShellOpen && !isCostpointSettingsPage}
+        headerTitle={
+          settingsShellOpen && !isCostpointSettingsPage ? 'Configure Settings' : undefined
+        }
+        headerActions={
+          settingsShellOpen && !isCostpointSettingsPage ? <PanelWindowControls /> : undefined
+        }
       >
         <div className="card__body">
+          {isCostpointSettingsPage && (
+            <h2 className="command-center-shell-title">
+              {settingsPage === 'close-agent'
+                ? 'Configure Close Agent Settings'
+                : 'Configure General Ledger Settings'}
+            </h2>
+          )}
           {!blankCommandCenter && (
           <div className="command-center-tab-row">
             <TabStrip
@@ -2790,15 +3245,57 @@ function HomeShell() {
               <div
                 className="command-center-shell-inner command-center-ai-settings"
                 role="region"
-                aria-label="Configure Settings content"
+                aria-label={
+                  settingsPage === 'close-agent'
+                    ? 'Configure Close Agent Settings content'
+                    : settingsPage === 'general-ledger'
+                      ? 'Configure General Ledger Settings content'
+                      : 'Configure Settings content'
+                }
               >
-                <Checkbox
-                  id="enable-dela-ai"
-                  label="Enable Dela AI assistance"
-                  checked={delaAiEnabled}
-                  onChange={(event) => setDelaAiEnabled(event.target.checked)}
-                />
+                {settingsPage === 'close-agent' ? (
+                  <CloseProcessThroughDelaFields
+                    checked={closeProcessThroughDela}
+                    onCheckedChange={setCloseProcessThroughDela}
+                    closeJobLookup={closeJobLookup}
+                    onCloseJobChange={setCloseJobLookup}
+                    onLookupOpen={() => {
+                      closeJobBeforeLookupRef.current = closeJobLookup
+                      setCloseJobLookupOpen(true)
+                    }}
+                  />
+                ) : settingsPage === 'general-ledger' ? (
+                  <GeneralLedgerSettingsPanel
+                    closeProcessWell={
+                      <div
+                        className="command-center-shell-inner command-center-ai-settings general-ledger-settings__dela-well"
+                        role="region"
+                        aria-label="Close Agent Settings"
+                      >
+                        <h3>Close Agent Settings</h3>
+                        <CloseProcessThroughDelaFields
+                          checked={closeProcessThroughDela}
+                          onCheckedChange={setCloseProcessThroughDela}
+                          closeJobLookup={closeJobLookup}
+                          onCloseJobChange={setCloseJobLookup}
+                          onLookupOpen={() => {
+                            closeJobBeforeLookupRef.current = closeJobLookup
+                            setCloseJobLookupOpen(true)
+                          }}
+                        />
+                      </div>
+                    }
+                  />
+                ) : (
+                  <Checkbox
+                    id="enable-dela-ai"
+                    label="Enable Dela AI assistance"
+                    checked={delaAiEnabled}
+                    onChange={(event) => setDelaAiEnabled(event.target.checked)}
+                  />
+                )}
               </div>
+              {settingsPage === 'general-ledger' && <GeneralLedgerSettingsTabs />}
             </div>
           )}
 
@@ -2920,7 +3417,7 @@ function HomeShell() {
         </div>
       </Card>
 
-      {settingsShellOpen && (
+      {settingsShellOpen && settingsPage === 'command-center' && (
         <div className="command-center-settings-stack">
           <Card
             primary
@@ -2996,10 +3493,39 @@ function HomeShell() {
         </div>
       )}
       </ShellLayout>
-      {navPanelOpen && (
+      {navPanelId === 'command-center' && (
         <LeftNavPanel
           onItemSelect={() => {
-            setNavPanelOpen(false)
+            setNavPanelId(null)
+            setSettingsPage('command-center')
+            setSettingsActiveTabId(SETTINGS_SHELL_TABS[0].id)
+            setSettingsDesign('design-1')
+            setSettingsShellOpen(true)
+          }}
+        />
+      )}
+      {navPanelId === 'accounting' && (
+        <LeftNavPanel
+          title="Accounting"
+          items={ACCOUNTING_NAV_ITEMS}
+          defaultExpanded={ACCOUNTING_NAV_DEFAULT_EXPANDED}
+          defaultSelected={
+            settingsPage === 'close-agent'
+              ? 'Configure Close Agent Settings'
+              : 'Configure General Ledger Settings'
+          }
+          onItemSelect={(item) => {
+            if (
+              item.label !== 'Configure General Ledger Settings' &&
+              item.label !== 'Configure Close Agent Settings'
+            ) {
+              return
+            }
+            setNavPanelId(null)
+            setBlankCommandCenter(true)
+            setSettingsPage(
+              item.label === 'Configure General Ledger Settings' ? 'general-ledger' : 'close-agent',
+            )
             setSettingsActiveTabId(SETTINGS_SHELL_TABS[0].id)
             setSettingsDesign('design-1')
             setSettingsShellOpen(true)
@@ -3025,6 +3551,103 @@ function HomeShell() {
         }
       >
         <InteractionRulesPanel />
+      </Dialog>
+      <Dialog
+        id="close-job-lookup-dialog"
+        title="Lookup"
+        className="close-job-lookup"
+        open={closeJobLookupOpen}
+        buttonAlignment="right"
+        resizable={false}
+        onClose={() => {
+          setCloseJobLookup(closeJobBeforeLookupRef.current)
+          setCloseJobLookupOpen(false)
+        }}
+        headerActions={
+          <>
+            <Dropdown
+              id="close-job-lookup-query"
+              className="close-job-lookup__query"
+              options={CLOSE_JOB_LOOKUP_QUERY_OPTIONS}
+              value={closeJobLookupQuery}
+              onChange={setCloseJobLookupQuery}
+            />
+            <PanelWindowControls showClose={false} />
+          </>
+        }
+        footer={
+          <div className="dialog__footer-actions">
+            <Button
+              buttonType="theme"
+              variant="primary"
+              size="sm"
+              onClick={() => setCloseJobLookupOpen(false)}
+            >
+              Select
+            </Button>
+            <Button
+              buttonType="theme"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCloseJobLookup(closeJobBeforeLookupRef.current)
+                setCloseJobLookupOpen(false)
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        }
+      >
+        <Table
+          className="close-job-lookup__table"
+          striped
+          header={
+            <thead>
+              <tr>
+                <th scope="col" className="close-job-lookup__select-column" aria-label="Selected">
+                  <span className="close-job-lookup__select-all" aria-hidden="true">
+                    <Icon name="check" size="sm" />
+                  </span>
+                </th>
+                <th scope="col">Job ID</th>
+                <th scope="col">Description</th>
+                <th scope="col">Job Group</th>
+                <th scope="col">On Application Failure Option</th>
+                <th scope="col" className="text-right">
+                  Default Priority
+                </th>
+                <th scope="col">Comments</th>
+                <th scope="col">Creator</th>
+              </tr>
+            </thead>
+          }
+          body={
+            <tbody>
+              {CLOSE_JOB_LOOKUP_ROWS.map((row) => {
+                const selected = closeJobLookup === row.jobId
+                return (
+                  <tr
+                    key={row.jobId}
+                    className={clsx(selected && 'table-row--selected')}
+                    onClick={() => setCloseJobLookup(row.jobId)}
+                  >
+                    <td className="close-job-lookup__select-column">
+                      {selected && <Icon name="check" size="sm" />}
+                    </td>
+                    <td>{row.jobId}</td>
+                    <td>{row.description}</td>
+                    <td>{row.jobGroup}</td>
+                    <td>{row.failureOption}</td>
+                    <td className="text-right">{row.defaultPriority}</td>
+                    <td>{row.comments}</td>
+                    <td>{row.creator}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          }
+        />
       </Dialog>
     </>
   )
